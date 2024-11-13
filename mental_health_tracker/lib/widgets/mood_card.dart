@@ -1,5 +1,8 @@
-
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+import '../screens/list_moodentry.dart';
+import '../screens/login.dart';
 import '../screens/moodentry_form.dart';
 
 class ItemCard extends StatelessWidget {
@@ -11,6 +14,7 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Material(
       // Specify the background color of the application theme.
       color: Theme.of(context).colorScheme.secondary,
@@ -19,7 +23,7 @@ class ItemCard extends StatelessWidget {
 
       child: InkWell(
         // Action when the card is pressed.
-        onTap: () {
+        onTap: () async {
           // Display the SnackBar message when the card is pressed.
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -31,6 +35,34 @@ class ItemCard extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => MoodEntryFormPage(),
                 ));
+          } else if (item.name == "View Mood") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MoodEntryPage()),
+            );
+          } else if (item.name == "Logout") {
+            final response = await request.logout(
+                // TODO: Change the URL to your Django app's URL. Don't forget to add the trailing slash (/) if needed.
+                "http://localhost:8000/auth/logout/");
+            String message = response["message"];
+            if (context.mounted) {
+              if (response['status']) {
+                String uname = response["username"];
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("$message Goodbye, $uname."),
+                ));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(message),
+                  ),
+                );
+              }
+            }
           }
         },
         // Container to store the Icon and Text
